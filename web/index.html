@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DJI 素材色彩空间标记工具</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#ffffff; --line:#e3e6ea; --text:#1c2128; --muted:#6b7280;
+    --text-strong:#111827; --text-2:#374151; --muted-2:#4b5563;
+    --radius:12px; --shadow-1:0 1px 2px rgba(16,24,40,.04),0 4px 14px rgba(16,24,40,.05);
+    --focus:0 0 0 3px rgba(31,111,235,.22);
+    --accent:#1f6feb; --accent-soft:#e8f0fe;
+    --d1:#7c4dff; --d2:#5e35b1; --dh:#b45309; --dn:#2e7d5b; --du:#64748b; --dm:#00838f;
+    /* 硬解横条：青绿主题 + 关闭态中性色 */
+    --hw:#0f766e; --hw-soft:#eff9f7; --hw-line:#bfe3dc; --hw-text:#0b4f48; --pill-line:#a9d5cd;
+    --hw-off:#64748b; --hw-off-soft:#f6f7f9; --hw-off-line:#dfe3e8;
+  }
+  *{box-sizing:border-box}
+  html,body{max-width:100%}
+  body{margin:0;background:var(--bg);color:var(--text);overflow-x:hidden;
+    font:14px/1.6 -apple-system,"Segoe UI","Microsoft YaHei",Roboto,sans-serif;}
+  .wrap{max-width:1180px;margin:0 auto;padding:24px 20px 60px;}
+  /* 抬头 */
+  .headline{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  h1{font-size:22px;font-weight:700;margin:0;color:var(--text-strong);}
+  .ver{display:inline-flex;align-items:center;font-size:12px;font-weight:600;color:var(--accent);
+    background:var(--accent-soft);border:1px solid #cfe0fc;border-radius:999px;padding:2px 10px;
+    cursor:pointer;user-select:none;}
+  .ver:hover{background:#dce9fd;}
+  .lang-btn{min-height:34px;padding:4px 14px;font-size:13px;font-weight:700;
+    color:#9a3412;border-color:#fb923c;background:#fff7ed;}
+  .lang-btn:hover{background:#ffedd5;border-color:#ea580c;color:#9a3412;}
+  .help-btn{margin-left:auto;min-height:32px;padding:4px 12px;font-size:12px;
+    color:var(--accent);border-color:#cfe0fc;background:var(--accent-soft);}
+  .dev-meta{color:#0f766e} .dev-srt{color:#1f6feb} .dev-manual{color:#b45309}
+  /* 双语模式：中文照常显示，英文以小一号字附在下方 */
+  .i18n-en{display:none;font-size:.86em;color:var(--muted-2);font-weight:400;
+    line-height:1.4;margin-top:2px;}
+  body.lang-both .i18n-en{display:block;}
+  .intro-line{font-size:12px;color:var(--muted-2);margin-bottom:10px;line-height:1.7}
+  .intro-line a{color:var(--accent);text-decoration:none}
+  .intro-line a:hover{text-decoration:underline}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:20px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px 20px;margin-bottom:16px;box-shadow:var(--shadow-1);}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  input[type=text]{flex:1 1 320px;min-width:0;min-height:36px;padding:9px 12px;
+    border:1px solid var(--line);border-radius:8px;font-size:13px;background:#fff;color:var(--text);}
+  /* 全局焦点规范：统一 outline，不再用 box-shadow，避免双焦点环 */
+  input:focus-visible,select:focus-visible,button:focus-visible,
+  .ver:focus-visible,.fn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  input[type=text]:focus{border-color:var(--accent);}
+  button{padding:8px 16px;min-height:36px;border:1px solid var(--line);background:#fff;
+    border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text-2);
+    transition:background .12s,border-color .12s,color .12s;}
+  button:hover{border-color:var(--accent);color:var(--accent);background:#f7faff;}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+  button.primary:hover{background:#1a5fd0;border-color:#1a5fd0;color:#fff;}
+  button:active{transform:translateY(1px);}
+  button:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+  select{min-height:36px;}
+  .opts{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--text-2);}
+  .opts label{display:flex;gap:6px;align-items:center;cursor:pointer;}
+  .chips{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  .chip{padding:5px 12px;border-radius:20px;font-size:12px;border:1px solid var(--line);background:#fff;}
+  .chip b{font-size:14px;margin-left:4px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums;}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle;}
+  tbody tr:hover{background:#f8fafc;}
+  th{color:var(--muted);font-weight:600;font-size:12px;background:#fafbfc;position:sticky;top:0;}
+  td.name{font-family:ui-monospace,Consolas,monospace;font-size:12px;}
+  td.newname{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--accent);}
+  .badge{display:inline-block;padding:2px 9px;border-radius:5px;color:#fff;font-size:11px;font-weight:600;}
+  .b-D1{background:var(--d1)} .b-D2{background:var(--d2)} .b-DH{background:var(--dh)}
+  .b-DN{background:var(--dn)} .b-DU{background:var(--du)} .b-DM{background:var(--dm)}
+  .b-DC{background:#b45309}
+  .muted{color:var(--muted)}
+  .src{font-size:12px;color:var(--muted-2);}
+  .fn{cursor:pointer;border-bottom:1px dashed #9ca3af}
+  .fn:hover{color:var(--accent);border-bottom-color:var(--accent)}
+  .src-unknown{color:#c2410c;font-weight:600;}
+  td.dev{font-size:11px;color:var(--text-2);}
+  select.codeSel,#anMarkCode{padding:5px 7px;border:1px solid var(--line);border-radius:6px;
+    font-size:12px;background:#fff;color:var(--text);}
+  .tag{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 6px;}
+  .scroll{max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:8px;}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text-2);}
+  .legend span b{font-family:ui-monospace,Consolas,monospace;}
+  #log{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--text-2);
+    white-space:pre-wrap;max-height:150px;overflow:auto;padding:10px 12px;
+    background:#fafbfc;border:1px solid var(--line);border-radius:8px;}
+  .empty{padding:28px;text-align:center;color:var(--muted);font-size:13px;}
+  .warn{background:#fff8e6;border:1px solid #f0d999;border-radius:8px;color:#92400e;}
+  /* 硬解横条：状态胶囊完全由 #anHw:checked 派生，不引入第二个 JS 状态源 */
+  .hw-bar{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;
+    background:var(--hw-soft);border:1px solid var(--hw-line);border-left:4px solid var(--hw);
+    border-radius:var(--radius);padding:12px 14px;margin-bottom:12px;}
+  .hw-bar input[type=checkbox]{width:20px;height:20px;accent-color:var(--hw);
+    flex:none;margin:1px 0 0;cursor:pointer;}
+  #anHw:focus-visible{outline-color:var(--hw);}   /* 仅覆盖局部语义色，环宽仍用全局规范 */
+  .hw-copy{flex:1 1 320px;min-width:0;cursor:pointer;}
+  .hw-title{display:block;font-size:16px;font-weight:600;color:var(--hw-text);line-height:1.4}
+  .hw-desc{display:block;font-size:12px;color:var(--muted-2);margin-top:3px}
+  .hw-state{display:none;align-self:center;white-space:nowrap;font-size:12px;font-weight:600;
+    padding:3px 10px;border-radius:999px;color:var(--hw-text);background:#fff;
+    border:1px solid var(--pill-line);}
+  #anHw:checked ~ .hw-state-on{display:inline-flex;}
+  #anHw:not(:checked) ~ .hw-state-off{display:inline-flex;
+    color:var(--hw-off);background:var(--hw-off-soft);border-color:var(--hw-off-line);}
+  .hw-bar:has(#anHw:not(:checked)){--hw:var(--hw-off);--hw-soft:var(--hw-off-soft);
+    --hw-line:var(--hw-off-line);--hw-text:var(--hw-off);}
+  .dc-warn{padding:8px 10px;margin-top:6px;font-size:12px;color:#9a3412;}
+  /* 画面分析 / 标记：辅助区，弱化处理（灰底细边，不与最终执行区争夺注意力） */
+  .analyze-section{margin-top:16px;padding:14px 16px;border:1px solid var(--line);
+    border-radius:var(--radius);background:#fafbfc;}
+  .an-title{font-size:13px;font-weight:600;margin-bottom:10px;color:var(--muted-2)}
+  .an-mark-row{margin-top:12px;padding:9px 12px;background:#fff;
+    border:1px solid var(--line);border-left:3px solid #b6bdc7;border-radius:8px;}
+  .an-mark-label{font-size:13px;font-weight:600;color:var(--text-2);}
+  .an-mark-row select#anMarkCode{font-size:13px;font-weight:600;padding:7px 9px;min-height:34px;}
+  .an-mark-row button.primary{font-size:13px;padding:7px 14px;}
+  .an-mark-stat{font-size:12px;font-weight:600;color:var(--muted-2);}
+  /* 表格前两列：分析弱、改名强 */
+  th.an-col{color:var(--muted);background:#f7f8fa}
+  th.ren-col{color:var(--accent);background:var(--accent-soft)}
+  /* 最终执行区：重命名勾选 + 执行，醒目且与辅助区明显分割 */
+  .rename-zone{margin-top:18px;padding:14px 16px 16px;border:2px solid var(--accent);
+    border-radius:var(--radius);background:var(--accent-soft);
+    box-shadow:0 2px 10px rgba(31,111,235,.10);}
+  .zone-divider{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;
+    font-size:14px;font-weight:700;color:var(--accent);}
+  .zone-divider .i18n-en{flex-basis:100%;margin-top:2px;order:3;}
+  .divider-line{flex:1;height:1px;background:#bcd4f8;order:2;}
+  .rename-zone button.primary{font-size:16px;font-weight:700;padding:10px 24px;min-height:44px;
+    box-shadow:0 2px 6px rgba(31,111,235,.20);}
+  .rename-hint{font-size:13px;font-weight:700;color:#174ea6;line-height:1.45;}
+  .rename-zone .muted{font-size:12px;}
+  /* 页面最下方：许可证信息 */
+  .site-foot{text-align:center;font-size:12px;color:var(--muted);margin-top:18px;
+    padding-top:12px;border-top:1px solid var(--line);}
+  /* 画面分析：结果直接回填到结果表对应行内 */
+  .anInline{font-size:11px;color:#0f766e;margin-top:4px;line-height:1.45;}
+  .anSug{color:var(--accent);font-weight:600;}
+  .anMid{color:#c2410c;font-weight:600;}
+  /* 抬头版本号 / 更新日志 / 使用说明：共用 .verCard 视觉语言 */
+  .icon-btn{min-height:28px;padding:2px 9px;font-size:16px;line-height:1;flex:none;}
+  #verMask,#helpMask{position:fixed;inset:0;background:rgba(20,24,30,.42);display:none;
+    align-items:center;justify-content:center;}
+  #verMask{z-index:100;}
+  #helpMask{z-index:101;}
+  #verMask.on,#helpMask.on{display:flex;}
+  .verCard{background:#fff;border-radius:12px;width:min(720px,92vw);max-height:82vh;
+    display:flex;flex-direction:column;box-shadow:0 18px 50px rgba(0,0,0,.28);overflow:hidden;}
+  .verCard header{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;
+    align-items:center;gap:10px;}
+  .verCard header .ttl{font-weight:600;font-size:15px;flex:1;color:var(--text-strong);}
+  .verCard header .icv{font-size:12px;color:var(--muted);flex:none;}
+  .verCard .body{padding:12px 18px;overflow:auto;font-size:13px;line-height:1.65;}
+  .verCard .rules{font-size:12px;color:var(--muted);background:#fafbfc;border:1px solid var(--line);
+    border-radius:8px;padding:8px 10px;margin-bottom:14px;}
+  .verCard .rel{margin-bottom:16px;}
+  .verCard .rel h3{margin:0 0 5px;font-size:14px;color:var(--text);}
+  .verCard .rel h3 .cur{font-size:11px;color:var(--accent);border:1px solid var(--accent);
+    border-radius:4px;padding:0 5px;margin-left:6px;font-weight:400;}
+  .verCard .rel ul{margin:4px 0 0;padding-left:18px;color:var(--text-2);}
+  .verCard .rel li{margin:2px 0;}
+  .verCard footer{padding:12px 18px;border-top:1px solid var(--line);text-align:right;}
+  .verCard footer a{float:left;font-size:12px;color:var(--accent);text-decoration:none;line-height:36px;}
+  .verCard footer a:hover{text-decoration:underline;}
+  .flow-diagram{display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+    background:var(--accent-soft);border:1px solid #cfe0fc;border-left:4px solid var(--accent);
+    border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--text-2)}
+  .flow-diagram b{color:var(--accent)}
+  .flow-diagram span{font-weight:700;color:var(--text-strong)}
+  .flow-diagram i{font-style:normal;color:var(--accent);font-weight:700}
+  .help-sec{margin:0 0 16px;}
+  .help-sec h3{margin:0 0 6px;font-size:14px;color:var(--text-strong);}
+  .help-sec ul{margin:0;padding-left:20px;color:var(--text-2);}
+  .help-sec li{margin:3px 0;}
+  .help-sec p{margin:4px 0;color:var(--text-2);}
+  /* 内置文件夹浏览器 */
+  #pickerMask{position:fixed;inset:0;background:rgba(20,24,30,.42);display:none;z-index:99;
+    align-items:center;justify-content:center;}
+  #pickerMask.on{display:flex;}
+  .picker{background:#fff;border-radius:12px;width:min(760px,92vw);max-height:80vh;display:flex;flex-direction:column;
+    box-shadow:0 18px 50px rgba(0,0,0,.28);overflow:hidden;}
+  .picker header{padding:12px 16px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;}
+  .picker header .ttl{font-weight:600;font-size:14px;flex:1;color:var(--text-strong);}
+  .picker .bar{padding:10px 16px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .picker .bar input{min-width:0;}
+  .picker .list{flex:1;overflow:auto;padding:6px 8px;min-height:220px;}
+  .picker select{padding:7px 8px;border:1px solid var(--line);border-radius:8px;font-size:13px;background:#fff;color:var(--text);}
+  .picker .list .it{padding:7px 10px;border-radius:7px;cursor:pointer;display:flex;gap:8px;align-items:center;font-size:13px;}
+  .picker .list .it:hover{background:var(--accent-soft);}
+  .picker .list .it .ic{width:16px;text-align:center;color:#b98900;flex:none;}
+  .picker .list .it .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .picker .list .it .mt{flex:none;font-size:11px;color:var(--muted);font-family:ui-monospace,Consolas,monospace;}
+  .picker .list .it.up{color:var(--muted);}
+  .picker footer{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;align-items:center;}
+  .picker footer .cur{flex:1;font-size:12px;color:var(--muted);font-family:ui-monospace,Consolas,monospace;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  /* 响应式：表格只在 .scroll 内横向滚动，页面本身不横滚 */
+  @media (max-width:900px){
+    .headline{row-gap:6px}
+    .intro-line{white-space:normal;word-break:break-word}
+    .help-btn{margin-left:0}
+    table{min-width:900px}
+  }
+  @media (max-width:640px){
+    .wrap{padding:16px 12px}
+    input[type=text]{min-width:0;width:100%}
+    .row,.opts,.picker .bar{flex-wrap:wrap}
+    .verCard,.picker{width:94vw;max-height:90vh}
+    .card{padding:14px 12px}
+    .verCard .body{padding:10px 12px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation:none;transition:none;scroll-behavior:auto}
+    button:active{transform:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="headline">
+    <h1 data-en="DJI Footage Color Space Tagging Tool">DJI 素材色彩空间标记工具</h1>
+    <span class="ver" id="verBtn" onclick="toggleVer()" role="button" tabindex="0"
+          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleVer()}"
+          title="查看更新日志">v3.04.03</span>
+    <button type="button" id="langBtn" class="lang-btn" onclick="toggleLang()"
+            title="切换中文 / 中英双语">语言 / Language：中文</button>
+    <button type="button" id="helpBtn" class="help-btn" onclick="openHelp()" data-en="? Help">? 使用说明</button>
+  </div>
+  <div class="intro-line" data-en="Bilibili / Douyin / Xiaohongshu / YouTube: KylinFPV | Free and open source forever | GitHub: KylinFPV/DJI_ColorSpace_Renamer">B站 / 抖音 / 小红书 / YouTube：<a href="https://space.bilibili.com/36780014" target="_blank" rel="noopener noreferrer">KylinFPV</a>　·　本软件永久免费开源　·　GitHub：<a href="https://github.com/KylinFPV/DJI_ColorSpace_Renamer" target="_blank" rel="noopener noreferrer">KylinFPV/DJI_ColorSpace_Renamer ↗</a></div>
+  <div class="sub">
+    <div class="i18n-pair">自动判定色彩空间并标记文件名。<span class="i18n-en">Automatically detects the color space and tags the filename.</span></div>
+    <div class="i18n-pair"><b>只重命名，不改动文件内容 / 元数据 / 时间戳。</b><span class="i18n-en">Renames only; file content, metadata and timestamps are untouched.</span></div>
+    <div class="i18n-pair">目前可识别设备：<span class="dev-meta"><b>Osmo Pocket 4P</b></span>（机身元数据）；<span class="dev-srt"><b>Avata 360 / Avata 2 / O4 Air Unit Pro / O3 天空端</b></span>（SRT 字幕）；<span class="dev-manual"><b>Osmo Pocket 3 / Action 2 / Osmo Nano / Osmo 360 II</b></span>（无色彩元数据，需手动指定或画面参考）。<span class="i18n-en">Supported devices: Osmo Pocket 4P (camera metadata); Avata 360 / Avata 2 / O4 Air Unit Pro / O3 Air Unit (SRT subtitles); Osmo Pocket 3 / Action 2 / Osmo Nano / Osmo 360 II (no color metadata; manual tagging or frame analysis needed).</span></div>
+    <div class="i18n-pair">识别来源：① 机身 <code>ColorGammaSxS</code>；② 同名 <code>.SRT</code> 的 <code>color_md</code>；③ 都没有时标「未知」。<span class="i18n-en">Sources: ① camera metadata (ColorGammaSxS); ② color_md in the matching .SRT file; ③ Unknown if neither is available.</span></div>
+    <div class="i18n-pair">O3 天空端 / Action 2 的 <code>DJI_xxxx.MP4</code>（无 _D 标记）会<b>追加</b>后缀：<code>_DN</code>=Normal、<code>_DC</code>=D-Cinelike。<span class="i18n-en">For O3 Air Unit / Action 2 DJI_xxxx.MP4 files (no _D tag), suffixes are appended: _DN = Normal, _DC = D-Cinelike.</span></div>
+    <div class="i18n-pair">表格「设备」列显示文件内 <code>©too</code> 元数据里的设备名。<span class="i18n-en">The Device column shows the camera name from the file's ©too metadata.</span></div>
+  </div>
+  <div class="legend" style="margin-bottom:14px" data-en="Color tags: D-Log _D1 / D-Log 2 _D2 / D-Log M _DM / HLG _DH / Normal _DN / D-Cinelike _DC / Unknown _DU">
+    <span><b>D-Log</b> → _D1</span><span><b>D-Log 2</b> → _D2</span>
+    <span><b>D-Log M</b> → _DM</span><span><b>HLG</b> → _DH</span>
+    <span><b>Rec.709 / Normal</b> → _DN</span><span><b>D-Cinelike</b> → _DC</span>
+    <span><b>未知</b> → _DU</span>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <input type="text" id="folder" data-ph="选择或粘贴素材文件夹路径，例如 W:\02_VideoRaw\...\p4p" data-ph-en="Paste a footage folder path, e.g. W:\02_VideoRaw\...\p4p" placeholder="选择或粘贴素材文件夹路径，例如 W:\02_VideoRaw\...\p4p">
+      <button class="primary" onclick="openPicker()" data-en="Browse folders...">浏览文件夹…</button>
+      <button id="sysBrowseBtn" onclick="sysBrowse()" title="调用系统对话框（卡住可点「取消系统对话框」）" data-en="System dialog">系统对话框</button>
+      <button id="sysCancelBtn" onclick="sysCancel()" style="display:none;color:#b91c1c" data-en="Cancel system dialog">取消系统对话框</button>
+      <button onclick="scan()" data-en="Scan">扫描</button>
+    </div>
+    <div class="opts">
+      <label data-en="Rename matching sidecar files (.LRF / .AAC, etc.)"><input type="checkbox" id="optSidecars" checked> 连同 .LRF / .AAC 等同名配套文件一起改名</label>
+      <label data-en="Include subfolders"><input type="checkbox" id="optRecursive"> 包含子文件夹</label>
+      <label data-en="Skip already tagged files (_D1/_D2/_DH/_DN/_DM/_DC/_DU)"><input type="checkbox" id="optSkipTagged" checked> 跳过已标记的文件（_D1/_D2/_DH/_DN/_DM/_DC/_DU）</label>
+    </div>
+  </div>
+
+  <div class="card" id="resultCard" style="display:none">
+    <div class="chips" id="chips"></div>
+    <div class="scroll">
+      <table>
+        <thead><tr>
+          <th class="an-col" style="width:62px" title="是否参与画面饱和度分析" data-en="Analyze"><input type="checkbox" id="anAll" onclick="toggleAnalyzeAll(this)"> 分析</th>
+          <th class="ren-col" style="width:62px" title="是否执行改名" data-en="Rename"><input type="checkbox" id="all" onclick="toggleAll(this)" checked> 改名</th>
+          <th data-en="File / Subfolder">文件 / 所在文件夹</th><th style="width:120px" data-en="Device (metadata)">设备（元数据）</th>
+          <th style="width:200px" data-en="Detected result / source / frame analysis">识别结果 / 来源 / 画面分析</th>
+          <th style="width:132px" data-en="Tag as">标记为</th><th data-en="Renamed to">改名后</th>
+        </tr></thead>
+        <tbody id="tb"></tbody>
+      </table>
+      <div class="empty" id="emptyMsg" style="display:none">没有符合条件的视频文件</div>
+    </div>
+  <div class="analyze-section" id="analyzeBox" style="display:none">
+    <div class="an-title" data-en="Frame saturation / contrast analysis (reference only, on-demand extraction; FFmpeg required)">画面饱和度 / 对比度分析（参考值，按需抽帧，需要有 FFmpeg）</div>
+    <label class="hw-bar">
+      <input type="checkbox" id="anHw" checked aria-describedby="hwDesc">
+      <span class="hw-copy">
+        <span class="hw-title" data-en="Enable hardware decoding (GPU first)">启用硬解（GPU 优先）</span>
+        <span class="hw-desc" id="hwDesc" data-en="On by default; falls back to CPU if the GPU or driver is unsupported. Affects speed only, not thresholds or footage.">默认开启；显卡或驱动不支持时自动回退 CPU，只影响分析速度，不改变判定阈值与素材内容。</span>
+      </span>
+      <span class="hw-state hw-state-on" data-en="On - GPU first">已开启 · GPU 优先</span>
+      <span class="hw-state hw-state-off" data-en="Off - CPU decoding">已关闭 · CPU 解码</span>
+    </label>
+    <div style="font-size:12px;color:var(--muted-2);margin-bottom:10px" data-en="All files can be analyzed, including recognized ones. Extraction runs only after you tick Analyze and click the button. Saturation <32 suggests D-Log M; >48 suggests Normal Rec.709; 32-48 needs visual check. Results are suggestions only and never rename automatically. D-Cinelike is not covered by this criterion.">
+      <b>所有文件都可分析</b>（含已识别色彩空间）。勾选结果表「分析」列后点按钮才抽帧（较慢），
+      结果<b>直接显示在对应文件行内</b>。饱和度 &lt;32 → 较可能 D-Log M，&gt;48 → 较可能普通 Rec.709，
+      <b>32~48 需肉眼确认</b>。结论只作建议，不会自动改名。<br>
+      <div class="warn dc-warn"><b>注意：该判据只标定过 D-Log M / Normal。实测 O3 的 D-Cinelike 饱和度 26.9，
+      会被误判成 D-Log M；D-Cinelike 请以 SRT 的 <code>color_md : d_cinelike</code> 或人工指定为准。</b></div>
+    </div>
+    <div class="row" style="margin-bottom:10px">
+      <button onclick="anSelectAll()" data-en="Select all">全选</button>
+      <button onclick="anSelectUnknown()" data-en="Select unknown">全选未识别</button>
+      <button onclick="anSelectPendingUnknown()"
+              title="单次分析最多 100 个；先清空分析勾选，再选未改名且未识别的前 100 个"
+              data-en="Select untagged + unknown (first 100)">选未改名+未识别前100</button>
+      <button onclick="anInvert()" data-en="Invert">反选</button>
+      <button onclick="anClear()" data-en="Clear selection">清空选择</button>
+      <button class="primary" id="anRunBtn" onclick="anRun()" data-en="Analyze selected">分析选中画面</button>
+      <button id="anApplyBtn" onclick="anApply()" disabled data-en="Apply suggestions">按建议应用</button>
+      <span class="muted" id="anStat" style="font-size:12px"></span>
+    </div>
+    <div class="row an-mark-row">
+      <span class="an-mark-label" data-en="Tag selected analyzed files as:">已勾选分析文件标记为：</span>
+      <select id="anMarkCode"></select>
+      <button class="primary" onclick="anMarkSelected()" data-en="Confirm tag">确认标记</button>
+      <span class="an-mark-stat" id="anMarkStat"></span>
+    </div>
+  </div>
+  <div class="rename-zone">
+    <div class="zone-divider" data-en="Rename - final step">重命名 · 最终执行<span class="divider-line"></span></div>
+    <div class="row">
+      <span class="muted" style="font-size:12px" data-en="Select rename scope:">按范围勾选改名：</span>
+      <button onclick="renSelect('tagged')" data-en="All tagged">所有已改名</button>
+      <button onclick="renSelect('untagged')" data-en="All untagged">所有未改名</button>
+      <button onclick="renSelect('unknown')" data-en="All unknown">所有未识别</button>
+      <button onclick="renSelect('custom')" data-en="All custom">所有已自定义</button>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="primary" onclick="apply()" data-en="Rename files">执行重命名</button>
+      <button onclick="undo()" data-en="Undo rename">撤销重命名</button>
+      <span class="rename-hint" data-en="Checked files will have their selected tags written into the filenames">勾选的文件将会把挂的标记改入文件名中</span>
+      <span class="muted" id="stat"></span>
+    </div>
+  </div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px" data-en="Run log">运行日志</div>
+    <div id="log"></div>
+  </div>
+  <div class="site-foot" data-en="Licensed under the MIT License. Free to use, modify and distribute; see the README and repository for details.">本项目采用 MIT 许可证（MIT License）开源，永久免费，可自由使用、修改与分发；详见 README 与源码仓库。</div>
+</div>
+
+<div id="verMask" onclick="if(event.target===this)closeVer()">
+  <div class="verCard">
+    <header>
+      <span class="ttl">更新日志</span>
+      <span class="icv">当前 v3.04.03</span>
+      <button type="button" class="icon-btn" id="verCloseBtn" onclick="closeVer()" aria-label="关闭更新日志">×</button>
+    </header>
+    <div class="body">
+      <div class="rules">版本规则：末两位为小更新；中间两位代表明显功能差异（升级前确认）；首位为主版本（重磅更新，可建议）。</div>
+
+      <div class="rel">
+        <h3>v3.04.03 <span class="cur">当前</span></h3>
+        <ul>
+          <li>新增根目录 <code>LICENSE</code> 文件（MIT License）</li>
+        </ul>
+      </div>
+
+      <div class="rel">
+        <h3>v3.04.02</h3>
+        <ul>
+          <li>页面底部、使用说明第 ⑨ 节与 README 中英文版补充 MIT 许可证信息</li>
+          <li>使用说明由 8 节扩展为 9 节（新增「开源许可证」）</li>
+        </ul>
+      </div>
+
+      <div class="rel">
+        <h3>v3.04.01ui</h3>
+        <ul>
+          <li>结果表前两列对调：分析列在左、改名列在右</li>
+          <li>分析与标记区弱化为辅助区；「重命名 · 最终执行」独立分区并强化，按钮旁新增标记写入说明</li>
+          <li>顶部简介改为逐句双语对照（每句中文下方带整句英文）</li>
+          <li>修正启动器误导性警告：缺 imageio-ffmpeg 不再误报分析不可用，附消警安装命令</li>
+        </ul>
+      </div>
+
+      <div class="rel">
+        <h3>v3.04.01</h3>
+        <ul>
+          <li>修复「双击启动脚本闪退」：启动脚本改为 CRLF 换行；新增 .gitattributes 防止复发</li>
+        </ul>
+      </div>
+
+      <div class="rel">
+        <h3>v3.04.00</h3>
+        <ul>
+          <li>新增醒目的「语言 / Language」切换：中文原文保留，英文小一号字附在下方</li>
+          <li>KylinFPV 链接到 B 站空间；已支持设备用颜色加粗；标记板块移到改名上方</li>
+          <li>启动脚本改名 启动start.bat，CMD 中英双语提示；默认携带 depend/ 与依赖说明</li>
+          <li>新增流程图与六份英文版 Markdown 文档</li>
+        </ul>
+      </div>
+
+      <div class="rel">
+        <h3>v3.03.00</h3>
+        <ul>
+          <li>浏览文件夹首次打开显示盘符根目录，并记住上次使用的目录</li>
+          <li>删除看不懂的未识别提示模块；画面分析并入结果卡，批量标记行更醒目</li>
+          <li>支持把 Python 与 ffmpeg 放进解压目录 depend\；README 改为普通使用者版</li>
+        </ul>
+      </div>
+
+      <div class="rel">
+        <h3>v3.02.03</h3>
+        <ul>
+          <li>UI 评审落地：抬头、图例与整体视觉规范（对比度、圆角、焦点态、窄屏适配），功能零删减</li>
+          <li>画面分析硬解开关默认开启并醒目展示；取消勾选即显示「已关闭 · CPU 解码」</li>
+          <li>新增「? 使用说明」弹窗（8 节）：声明、识别来源、标记对照、上手、列说明、分析、批量与键盘、常见问题</li>
+          <li>新增 README：四条安全与隐私声明逐条给出源码依据与边界，依赖、目录放置与快速开始</li>
+          <li>补齐可访问性：文件名键盘可达、弹窗焦点管理与 ESC 优先级（说明 → 更新日志 → 内置浏览器）</li>
+        </ul>
+      </div>
+
+      <div class="rel">
+        <h3>v3.02.01</h3>
+        <ul>
+          <li>画面分析新增「选未改名+未识别前100」按钮，自动清空旧勾选并按顺序选中前 100 个</li>
+          <li>画面分析新增「已勾选分析文件标记为」下拉 +「确认标记」，按分析勾选批量改标记，仅预览不自动改名</li>
+          <li>新增批量控件 smoke 测试：控件存在、选择逻辑、标记链路与 JS 语法</li>
+          <li>修正控制台启动横幅版本号：由固定 v6 改为当前版本</li>
+        </ul>
+      </div>
+
+      <div class="rel">
+        <h3>v3.02.00</h3>
+        <ul>
+          <li>画面分析新增「启用硬解」开关（初版需手动开启）：ffmpeg -hwaccel auto 尝试显卡解码，失败自动回退 CPU</li>
+          <li>分析结果与运行日志显示实际解码方式；只改抽帧解码路径，不改判定阈值、不改素材内容</li>
+          <li>新增硬解 smoke 测试：覆盖默认 CPU、硬解与失败回退；真实素材与接口端到端验证通过</li>
+        </ul>
+      </div>
+
+      <div class="rel">
+        <h3>v3.01.02</h3>
+        <ul>
+          <li>跨机迁移：移除三处本机绝对路径，项目拷到任意路径即可运行</li>
+          <li>启动脚本自动查找 Python，支持 DJI_PYTHON 指定；缺依赖时降级并提示</li>
+          <li>ffmpeg 查找支持 DJI_FFMPEG、项目 bin/ 目录与按当前用户推导</li>
+          <li>启动脚本对显式指定的解释器也校验依赖；ffmpeg 兜底不再绑定版本文件名</li>
+        </ul>
+      </div>
+
+      <div class="rel">
+        <h3>v3.01.01</h3>
+        <ul>
+          <li>抬头增加可点击版本号与更新日志入口</li>
+          <li>建立版本记录</li>
+          <li>HLG 编码层取证：P3 / P4P 的 HLG 文件在 colr 写 BT.2020 / ARIB-STD-B67，可用于自动判定</li>
+        </ul>
+      </div>
+
+      <div class="rel">
+        <h3>v3.01.00</h3>
+        <ul>
+          <li>新增 D-Cinelike（_DC）：O3 天空端 SRT 的 d_cinelike 可自动识别</li>
+          <li>O3 天空端 / Action 2 的 DJI_xxxx.MP4 追加 _DN / _DC，配套文件同步</li>
+          <li>显示设备名（读取 ©too 元数据）</li>
+          <li>文件列显示 .../子文件夹；画面分析结果回填到对应行内；所有文件都可分析</li>
+          <li>四个范围勾选（已改名 / 未改名 / 未识别 / 已自定义）；撤销按勾选范围执行</li>
+          <li>已标记文件可再次勾选改名，默认不勾选</li>
+          <li>点击文件名用系统默认程序打开</li>
+          <li>系统对话框防卡死：超时守护与取消入口</li>
+        </ul>
+      </div>
+
+      <div class="rel">
+        <h3>v3.0.0</h3>
+        <ul>
+          <li>扫描性能优化（真实素材约 1.7×）</li>
+          <li>新增饱和度 / 对比度画面分析（初版需手动开启、按需抽帧）</li>
+        </ul>
+      </div>
+
+      <div class="rel">
+        <h3>v2.0.0</h3>
+        <ul>
+          <li>设备覆盖扩展：Osmo Pocket 4P（机身元数据）、Avata 360（SRT，含 OSV 全景）、Avata 2、O4 Air Unit Pro、Osmo Nano、Osmo 360 II、Osmo Pocket 3</li>
+          <li>无色彩元数据的机型支持手动指定与画面参考</li>
+          <li>配套文件同步改名、内置文件夹浏览、撤销</li>
+        </ul>
+      </div>
+
+      <div class="rel">
+        <h3>v1.0.0</h3>
+        <ul>
+          <li>基础能力：把文件名末尾的 _D 改为 _D1 / _D2 / _DH / _DN / _DU</li>
+          <li>只重命名，不改内容、元数据、时间戳</li>
+        </ul>
+      </div>
+    </div>
+    <footer><button type="button" id="verDoneBtn" onclick="closeVer()">关闭</button></footer>
+  </div>
+</div>
+
+<div id="helpMask" role="dialog" aria-modal="true" aria-labelledby="helpTitle"
+     onclick="if(event.target===this)closeHelp()">
+  <div class="verCard">
+    <header>
+      <span class="ttl" id="helpTitle" data-en="Help">使用说明</span>
+      <span class="icv">当前 v3.04.03</span>
+      <button type="button" class="icon-btn" id="helpCloseBtn" onclick="closeHelp()" aria-label="关闭使用说明">×</button>
+    </header>
+    <div class="body">
+      <div class="rules" data-en="Quick read: this tool only adds color tags to filenames; all processing stays on this computer. Nine sections cover safety, sources, workflow, FAQ and license.">一页看完：本工具只给文件名加色彩标记，所有处理都在本机完成。以下 9 节覆盖声明、来源、上手、常见问题与许可证。</div>
+      <div class="flow-diagram" data-en="Workflow: 1 Select analysis scope > 2 Analyze > 3 Tag > 4 Select rename scope > 5 Rename by tag">
+        <b>使用顺序：</b><span>① 选择分析范围</span><i>›</i><span>② 分析</span><i>›</i><span>③ 标记</span><i>›</i><span>④ 选择改名范围</span><i>›</i><span>⑤ 按标记改名</span>
+      </div>
+
+      <section class="help-sec" data-en="① What it does / does not do. Renames filename tags only (_D1/_D2/_DH/_DN/_DM/_DC/_DU), never file content. No network: local 127.0.0.1 service and local /api requests only. Video content and metadata are untouched; frame extraction stays in memory. FFmpeg is used only for saturation/contrast analysis when you explicitly start it; no transcoding, cropping, merging or exporting. The GitHub link opens externally only when you click it.">
+        <h3>① 做什么 / 不做什么</h3>
+        <ul>
+          <li><b>只修改文件名，不影响辨认度</b>：把文件名末尾的色彩标记改成 _D1/_D2/_DH/_DN/_DM/_DC/_DU；只改目录项，撤销依赖最近一次改名记录。</li>
+          <li><b>不上网</b>：服务只监听 127.0.0.1，页面只请求本地 /api；软件运行不联网。</li>
+          <li><b>不改素材内容</b>：识别全程只读；抽帧在内存管道完成，不落盘中间文件、不写回源视频。</li>
+          <li><b>ffmpeg 只用于对比度 / 饱和度分析</b>：仅主动触发分析时调用本地 ffmpeg，不转码 / 裁剪 / 合并 / 导出。</li>
+          <li>GitHub 链接仅用户主动点击才跳转，软件运行不联网。</li>
+        </ul>
+      </section>
+
+      <section class="help-sec" data-en="② Detection sources and priority. Camera metadata (moov/meta ColorGammaSxS) on Osmo Pocket 4P is most reliable. SRT color_md works on Avata 360, Avata 2, O4 Air Unit Pro and O3 Air Unit; enable Video Subtitles before recording. Osmo Pocket 3, Action 2, Osmo Nano and Osmo 360 II have no color metadata: tag manually or use frame analysis. No metadata -> _DU. Device names come from ©too metadata.">
+        <h3>② 识别来源与优先级</h3>
+        <ul>
+          <li>① 机身元数据：MP4 <code>moov/meta</code> 的 <code>ColorGammaSxS</code>（<span class="dev-meta"><b>Osmo Pocket 4P</b></span>，最可靠）；</li>
+          <li>② 同名 <code>.SRT</code> 字幕的 <code>color_md</code>（<span class="dev-srt"><b>Avata 360 / Avata 2 / O4 Air Unit Pro / O3 天空端</b></span>，需录制前开「视频字幕」）；</li>
+          <li>③ 无色彩元数据：<span class="dev-manual"><b>Osmo Pocket 3 / Action 2 / Osmo Nano / Osmo 360 II</b></span>，需手动指定或画面参考；</li>
+          <li>④ 都没有 → 标「未知」(_DU)。</li>
+          <li>「设备」列来自文件内 <code>©too</code> 元数据；O3 天空端未写型号，显示「— 未记录」。</li>
+        </ul>
+      </section>
+
+      <section class="help-sec" data-en="③ Filename tags. D-Log _D1, D-Log 2 _D2, HLG _DH, Normal _DN, D-Log M _DM, D-Cinelike _DC, Unknown _DU. DJI_xxxx.MP4 from O3 / Action 2 gets a suffix appended; sidecar files follow. Existing correct tags stay unchanged, so _D11 never appears.">
+        <h3>③ 文件名标记对照</h3>
+        <ul>
+          <li>D-Log → <code>_D1</code>　D-Log 2 → <code>_D2</code>　HLG → <code>_DH</code></li>
+          <li>普通 Rec.709 / Normal → <code>_DN</code>　D-Log M → <code>_DM</code></li>
+          <li>D-Cinelike → <code>_DC</code>　未知 → <code>_DU</code></li>
+          <li><code>DJI_xxxx.MP4</code>（O3 / Action 2，无 _D 标记）是<b>追加</b>后缀：<code>DJI_0006.MP4</code> → <code>DJI_0006_DN.MP4</code>；同名 .LRF/.SRT 等配套文件同步。已正确标记时保持原样，不会出现 <code>_D11</code>。</li>
+        </ul>
+      </section>
+
+      <section class="help-sec" data-en="④ Workflow. 1 Choose a folder and scan. 2 Check results and set tags; use analysis if needed. 3 Select rename scope and click Rename files. Undo works on the latest rename record for the selected files. Recommended order: select analysis scope > analyze > tag > select rename scope > rename by tag.">
+        <h3>④ 三步上手</h3>
+        <ul>
+          <li><b>1. 选目录并扫描</b>：粘贴文件夹路径，或用「浏览文件夹…」（内置浏览器）/「系统对话框」，点「扫描」。</li>
+          <li><b>2. 核对结果</b>：看「识别结果 / 来源」与「标记为」；识别不出时用批量指定下拉手动选，或勾选「分析」列跑画面参考。</li>
+          <li><b>3. 执行改名</b>：确认「改名」勾选范围后点「执行重命名」；改错了可用「撤销重命名」按勾选范围撤回。</li>
+        </ul>
+      </section>
+
+      <section class="help-sec" data-en="⑤ Table columns. Analyze / Rename checkboxes are independent. File / Subfolder shows the relative folder. Device shows the ©too metadata model. Detected result / source / frame analysis shows the raw tag, source and inline analysis. Tag as / Renamed to shows the chosen code and preview filename.">
+        <h3>⑤ 表格列说明</h3>
+        <ul>
+          <li><b>分析 / 改名</b>：左列控制是否参与画面抽帧，右列控制是否参与重命名；两列独立。</li>
+          <li><b>文件 / 所在文件夹</b>：点文件名用系统默认程序打开发现；下方小字是相对所选目录的子文件夹路径。</li>
+          <li><b>设备（元数据）</b>：文件内 ©too 记录的机型，读不到显示「— 未记录」。</li>
+          <li><b>识别结果 / 来源 / 画面分析</b>：原始色彩串、来源类型与行内分析结果；来源类型和状态以小字显示。</li>
+          <li><b>标记为 / 改名后</b>：可手动改的目标代码，以及对应的预览新文件名。</li>
+        </ul>
+      </section>
+
+      <section class="help-sec" data-en="⑥ Frame analysis. FFmpeg is required. Extraction runs only after you tick Analyze and click the button; results never rename automatically. Saturation <32 suggests D-Log M, >48 suggests Normal, 32-48 needs a visual check. Limit 100 files per run. Hard decoding is on by default with CPU fallback. The criterion is calibrated only for D-Log M / Normal; D-Cinelike is unreliable.">
+        <h3>⑥ 画面分析</h3>
+        <ul>
+          <li>勾选结果表「分析」列后点「分析选中画面」才抽帧，结果回填到对应行内，<b>不会自动改名</b>。</li>
+          <li>饱和度 <code>&lt;32</code> → 较可能 D-Log M；<code>&gt;48</code> → 较可能普通 Rec.709；<code>32~48</code> 需肉眼确认。</li>
+          <li>单次<b>最多 100 个</b>文件（「选未改名+未识别前100」会先清空旧勾选再按顺序选）。</li>
+          <li>判据<b>只标定过 D-Log M / Normal</b>，对 D-Cinelike 无效：实测 O3 的 D-Cinelike 饱和度 26.9 会被误判成 D-Log M，请以 SRT 或人工指定为准。</li>
+          <li>硬解<b>默认开启</b>：GPU 优先，显卡 / 驱动不支持时自动回退 CPU；取消勾选即走 CPU。只影响分析速度，不改变判定阈值，也不改动素材。</li>
+        </ul>
+      </section>
+
+      <section class="help-sec" data-en="⑦ Batch and keyboard tips. Rename scope: header checkbox and four range buttons. Analysis scope: select all / unknown / first 100 / invert / clear; batch tagging only previews. Shift+click two Analyze checkboxes selects a range. Enter in the picker path goes there; Escape closes Help, then Changelog, then the folder picker.">
+        <h3>⑦ 批量与键盘提示</h3>
+        <ul>
+          <li>改名范围：表头「改名」全选 +「所有已改名 / 未改名 / 未识别 / 已自定义」四个按钮。</li>
+          <li>分析范围：全选 / 全选未识别 / 选前100 / 反选 / 清空；「已勾选分析文件标记为」可批量改标记，仅预览。</li>
+          <li>按住 <b>Shift</b> 点「分析」列两个复选框，可连选区间。</li>
+          <li>内置浏览器的路径输入框按 <b>Enter</b> 直接前往；<b>Esc</b> 依次关闭使用说明 → 更新日志 → 内置浏览器。</li>
+        </ul>
+      </section>
+
+      <section class="help-sec" data-en="⑧ FAQ. Subtitles must be enabled before recording; system dialog can be cancelled or replaced by the built-in browser; if FFmpeg or Pillow is missing, put ffmpeg.exe in depend/ and install Pillow; copy the whole folder to another PC and launch start bat via a mapped drive.">
+        <h3>⑧ 常见问题</h3>
+        <ul>
+          <li><b>字幕没写进文件？</b> 必须在录制前于 DJI Fly / 飞行眼镜开启「视频字幕」，事后补不了；已有素材只能手动指定或按画面参考。</li>
+          <li><b>系统对话框卡住？</b> 点「取消系统对话框」，或直接用「浏览文件夹…」内置浏览器；系统弹窗 120 秒无响应会自动关闭并转到内置浏览器。</li>
+          <li><b>画面分析提示缺 ffmpeg / Pillow？</b> 用 <code>启动start.bat</code> 启动（会选带依赖的解释器），或执行 <code>pip install pillow imageio-ffmpeg</code>；也可把 ffmpeg.exe 放进项目 <code>bin/</code>。</li>
+          <li><b>换电脑怎么用？</b> 整个项目目录拷到任意路径即可（无需改代码）。用<b>映射盘符</b>双击 <code>启动start.bat</code>，不要用 UNC 路径；服务仅本机可访问。</li>
+        </ul>
+      </section>
+
+      <section class="help-sec" data-en="⑨ License. This project is released under the MIT License: free to use, modify and distribute, provided the copyright and license notices are retained. The software is provided as-is, without warranty. See the README and repository for details.">
+        <h3>⑨ 开源许可证</h3>
+        <ul>
+          <li>本项目采用 <b>MIT License（MIT 许可证）</b>开源，永久免费，可自由使用、修改与分发。</li>
+          <li>再分发时请保留版权声明与许可声明；软件按「原样」提供，不附带任何担保。</li>
+          <li>完整说明见项目 README 与源码仓库：<code>https://github.com/KylinFPV/DJI_ColorSpace_Renamer</code>。</li>
+        </ul>
+      </section>
+    </div>
+    <footer>
+      <a href="https://space.bilibili.com/36780014" target="_blank" rel="noopener noreferrer">作者：KylinFPV ↗</a>
+      <a href="https://github.com/KylinFPV/DJI_ColorSpace_Renamer" target="_blank" rel="noopener noreferrer">GitHub：KylinFPV/DJI_ColorSpace_Renamer ↗</a>
+      <button type="button" class="primary" id="helpDoneBtn" onclick="closeHelp()" data-en="Got it">知道了</button>
+    </footer>
+  </div>
+</div>
+
+<div id="pickerMask">
+  <div class="picker">
+    <header>
+      <span class="ttl">选择素材文件夹</span>
+      <span class="muted" style="font-size:12px">进入含 *_D.MP4 的文件夹后点「选择此文件夹」</span>
+      <button type="button" class="icon-btn" id="pickerCloseBtn" onclick="closePicker()" aria-label="关闭文件夹浏览器">×</button>
+    </header>
+    <div class="bar">
+      <button onclick="pkGo(pkParent)">↑ 上一级</button>
+      <input type="text" id="pkPath" placeholder="可直接输入路径后回车" onkeydown="if(event.key==='Enter')pkGo(this.value)">
+      <button onclick="pkGo($('pkPath').value)">前往</button>
+      <select id="pkSort" onchange="pkSortVal=this.value; pkGo(pkCurrent)">
+        <option value="name">按名称 A→Z</option>
+        <option value="name_desc">按名称 Z→A</option>
+        <option value="time">最近修改在前</option>
+        <option value="time_desc">最早修改在前</option>
+      </select>
+    </div>
+    <div class="list" id="pkList"></div>
+    <footer>
+      <span class="cur" id="pkCur"></span>
+      <button id="pickerCancelBtn" onclick="closePicker()">取消</button>
+      <button class="primary" onclick="pkChoose()">选择此文件夹</button>
+    </footer>
+  </div>
+</div>
+
+<script>
+let GROUPS = [];
+let AN_RESULTS = [];      // 与 AN_PICKS 一一对应的分析建议
+let AN_PICKS = [];        // 最近一次分析的 [{i, abs}]
+let AN_LAST = null;       // 分析列 Shift 连选的上一行索引
+let AN_BUSY = false;      // 防止分析期间重复点击
+let pkParent = null, pkCurrent = '', pkSortVal = 'name';
+const CODES = [
+  {k:'D1', n:'D-Log'}, {k:'D2', n:'D-Log 2'}, {k:'DM', n:'D-Log M'},
+  {k:'DH', n:'HLG'},   {k:'DN', n:'普通 Rec.709'}, {k:'DC', n:'D-Cinelike'},
+  {k:'DU', n:'未知'},
+];
+const ANALYZE_MAX = 100;   // 与后端 /api/analyze 的单次上限一致
+let SYS_RUNNING = false, SYS_POLL = null, SYS_TRIES = 0;
+const $ = id => document.getElementById(id);
+
+function log(msg){ $('log').textContent += msg + "\n"; $('log').scrollTop = 1e9; }
+
+// ---------- 中文 / 中英双语切换：中文原文保留，英文小一号字附在下方 ----------
+function applyI18n(){
+  const both = document.body.classList.contains('lang-both');
+  document.querySelectorAll('[data-en]').forEach(el => {
+    let en = null;
+    for (const c of el.children) if (c.classList && c.classList.contains('i18n-en')) en = c;
+    if (both && !en) {
+      en = document.createElement('span');
+      en.className = 'i18n-en';
+      en.textContent = el.getAttribute('data-en') || '';
+      el.appendChild(en);
+    } else if (!both && en) {
+      en.remove();
+    }
+  });
+  document.querySelectorAll('[data-ph]').forEach(el => {
+    el.placeholder = both ? (el.getAttribute('data-ph-en') || el.getAttribute('data-ph'))
+                          : el.getAttribute('data-ph');
+  });
+  const btn = $('langBtn');
+  if (btn) btn.textContent = both ? '语言 / Language：中英' : '语言 / Language：中文';
+}
+function toggleLang(){
+  const both = document.body.classList.toggle('lang-both');
+  try { localStorage.setItem('djiLangMode', both ? 'both' : 'zh'); } catch(e) {}
+  applyI18n();
+}
+(function initLang(){
+  let mode = 'zh';
+  try { mode = localStorage.getItem('djiLangMode') || 'zh'; } catch(e) {}
+  if (mode === 'both') document.body.classList.add('lang-both');
+  applyI18n();
+})();
+
+// ---------- 抬头版本号 / 使用说明：弹窗互斥、焦点管理与 ESC 优先级 ----------
+let DLG_TRIGGER = null;   // 打开弹窗前的触发按钮，关闭后还原焦点
+function rememberTrigger(){
+  const a = document.activeElement;
+  if (a && a !== document.body && !a.closest('.verCard, .picker')) DLG_TRIGGER = a;
+}
+function restoreTrigger(){
+  const a = DLG_TRIGGER;
+  DLG_TRIGGER = null;
+  if (a && typeof a.focus === 'function') a.focus();
+}
+function focusDialog(id){ const b = $(id); if (b) b.focus(); }
+function hideVer(){ $('verMask').classList.remove('on'); }
+function hideHelp(){ $('helpMask').classList.remove('on'); }
+function hidePicker(){ $('pickerMask').classList.remove('on'); }
+function closeVer(){ hideVer(); restoreTrigger(); }
+function closeHelp(){ hideHelp(); restoreTrigger(); }
+function closePicker(){ hidePicker(); restoreTrigger(); }
+function toggleVer(){
+  if ($('verMask').classList.contains('on')) return closeVer();
+  hideHelp(); hidePicker(); rememberTrigger();
+  $('verMask').classList.add('on');
+  focusDialog('verCloseBtn');
+}
+function openHelp(){
+  if ($('helpMask').classList.contains('on')) return;
+  hideVer(); hidePicker(); rememberTrigger();
+  $('helpMask').classList.add('on');
+  focusDialog('helpCloseBtn');
+}
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  // 优先级：使用说明 → 更新日志 → 内置浏览器；系统对话框是原生弹窗，不调 sysCancel
+  if ($('helpMask').classList.contains('on')) { closeHelp(); return; }
+  if ($('verMask').classList.contains('on')) { closeVer(); return; }
+  if ($('pickerMask').classList.contains('on')) { closePicker(); }
+});
+
+// 点击文件名：用系统默认程序打开该素材（只读，不改勾选、不触发扫描/改名）
+async function openFile(i){
+  const abs = ((GROUPS[i] && GROUPS[i].members[0]) || {}).abs;
+  if (!abs) return log('找不到文件路径');
+  try {
+    const r = await fetch('/api/open', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({path: abs})}).then(resp => resp.json());
+    if (r && r.ok) log('已用系统默认程序打开：' + GROUPS[i].video);
+    else log('打开失败：' + ((r && r.error) || '未知错误'));
+  } catch (err) {
+    log('打开失败：' + err);
+  }
+}
+
+// 填充分析勾选区的批量标记下拉；保留 DU，便于把错误标记改回未知。
+(function initCodeSelects(){
+  const opts = (list, def) => list.map(c =>
+    `<option value="${c.k}" ${c.k===def?'selected':''}>${c.k} · ${c.n}</option>`).join('');
+  const mark = $('anMarkCode');
+  if (mark) mark.innerHTML = opts(CODES, 'DM');
+})();
+
+// 记住上次使用的素材目录：仅存浏览器 localStorage，不访问网络。
+const LAST_FOLDER_KEY = 'djiLastFolder';
+function rememberFolder(p){
+  if (!p) return;
+  try { localStorage.setItem(LAST_FOLDER_KEY, p); } catch(e) {}
+}
+function lastFolder(){
+  try { return localStorage.getItem(LAST_FOLDER_KEY) || ''; } catch(e) { return ''; }
+}
+
+// ---------- 内置文件夹浏览器（不依赖系统对话框，必定可用） ----------
+function openPicker(){
+  hideHelp(); hideVer(); rememberTrigger();
+  $('pickerMask').classList.add('on');
+  focusDialog('pickerCloseBtn');
+  $('pkSort').value = pkSortVal;
+  const start = $('folder').value.trim() || lastFolder();
+  pkGo(start || '');   // 无历史位置时传空串，后端列出盘符根目录
+}
+function fmtTime(ts){
+  if (!ts) return '';
+  const d = new Date(ts * 1000);
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+async function pkGo(path){
+  const r = await fetch('/api/ls', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({path: path||'', sort: pkSortVal})}).then(r=>r.json());
+  if (r.error){ log('（浏览）' + r.error); }
+  if (r.error && !r.dirs){ return; }
+  pkCurrent = r.path || '';
+  pkParent = r.parent;
+  $('pkPath').value = pkCurrent;
+  $('pkCur').textContent = pkCurrent || '我的电脑（请选择盘符）';
+  const list = $('pkList');
+  list.innerHTML = '';
+  if (pkParent) list.appendChild(mkItem('⬆', '.. 上一级', () => pkGo(pkParent), '', true));
+  if (!pkCurrent){
+    (r.dirs||[]).forEach(d => list.appendChild(mkItem('💽', d.name, () => pkGo(d.path), '')));
+  } else {
+    if (!(r.dirs||[]).length){
+      const e = document.createElement('div');
+      e.className = 'empty'; e.textContent = '（此文件夹下没有子文件夹，可直接点「选择此文件夹」）';
+      list.appendChild(e);
+    }
+    (r.dirs||[]).forEach(d => list.appendChild(
+      mkItem('📁', d.name, () => pkGo(d.path), fmtTime(d.mtime))));
+  }
+}
+function mkItem(icon, name, fn, mtime, isUp){
+  const el = document.createElement('div');
+  el.className = 'it' + (isUp ? ' up' : '');
+  el.innerHTML = `<span class="ic">${icon}</span><span class="nm"></span>`
+    + (mtime ? `<span class="mt">${mtime}</span>` : '');
+  el.querySelector('.nm').textContent = name;   // 防转义
+  el.onclick = fn;
+  return el;
+}
+function pkChoose(){
+  if (!pkCurrent){ return log('请先进入一个具体文件夹（如 W:\\...\\p4p）再点「选择此文件夹」'); }
+  const p = pkCurrent.replace(/\//g, '\\');
+  $('folder').value = p;
+  rememberFolder(p);
+  closePicker();
+  log('已选择：' + p);
+  scan();
+}
+
+// ---------- 系统对话框（可选；带超时守护与手动取消） ----------
+function sysStop(msg){
+  SYS_RUNNING = false;
+  if (SYS_POLL) { clearTimeout(SYS_POLL); SYS_POLL = null; }
+  const c = $('sysCancelBtn'), b = $('sysBrowseBtn');
+  if (c) c.style.display = 'none';
+  if (b) b.disabled = false;
+  if (msg) log(msg);
+}
+async function sysCancel(){
+  try { await fetch('/api/browse-cancel', {method:'POST', body:'{}'}); } catch(e){}
+  sysStop('已关闭系统对话框。建议用「浏览文件夹…」（内置浏览器，不依赖系统弹窗）。');
+}
+async function sysBrowse(){
+  log('正在打开系统文件夹选择框…（若卡住，点「取消系统对话框」，或直接用「浏览文件夹…」）');
+  const b = $('sysBrowseBtn'); if (b) b.disabled = true;
+  const c = $('sysCancelBtn'); if (c) c.style.display = '';
+  SYS_RUNNING = true; SYS_TRIES = 0;
+  const r = await fetch('/api/browse', {method:'POST', body:'{}'}).then(r=>r.json());
+  if (r.error) { sysStop('无法启动选择框：' + r.error + '，请改用「浏览文件夹…」'); return; }
+  const poll = async () => {
+    if (!SYS_RUNNING) return;
+    let q;
+    try { q = await fetch('/api/browse-result', {method:'POST', body:'{}'}).then(r=>r.json()); }
+    catch(e){ sysStop('读取选择结果失败：' + e); return; }
+    if (!SYS_RUNNING) return;
+    if (q.path) { $('folder').value = q.path; rememberFolder(q.path); sysStop('已选择：' + q.path); scan(); return; }
+    if (q.error) { sysStop('（系统对话框）' + q.error + '；请改用「浏览文件夹…」'); return; }
+    if (++SYS_TRIES < 200) SYS_POLL = setTimeout(poll, 600);
+    else { await sysCancel(); log('系统对话框超时，已自动关闭并打开内置浏览器。'); openPicker(); }
+  };
+  SYS_POLL = setTimeout(poll, 600);
+}
+
+async function scan(){
+  const folder = $('folder').value.trim();
+  if (!folder) return log('请先选择文件夹');
+  rememberFolder(folder);
+  log('扫描中：' + folder);
+  const r = await fetch('/api/scan', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({folder, recursive:$('optRecursive').checked,
+      sidecars:$('optSidecars').checked, skipTagged:$('optSkipTagged').checked})}).then(r=>r.json());
+  if (r.error) return log('错误：' + r.error);
+  GROUPS = r.groups;
+  GROUPS.forEach(g => { g.custom = false; });   // 重扫后清除「已自定义」标记
+  AN_RESULTS = []; AN_PICKS = []; AN_LAST = null;   // 重扫后旧建议作废
+  render(r.counts);
+  renderAnInline();
+  log('扫描完成：' + GROUPS.length + ' 个视频文件');
+}
+
+// 末尾是否已有「明确」的色彩标记：_D1/_D2/_DH/_DN/_DM/_DC/_DU 算，裸 _D 不算。
+// 规则与后端 core.TAG_AT_END (/_D([12UHNMC])?$/i) 完全一致。
+function hasTag(g){
+  const stem = String((g && g.video) || '').replace(/\.[^.]+$/, '');
+  const m = stem.match(/_D([12UHNMC])?$/i);
+  return !!(m && m[1]);
+}
+function render(counts){
+  $('resultCard').style.display = '';
+  // 待改名数量统计所有行，与「所有行都可勾选」的范围保持一致
+  const pending = GROUPS.filter(g => g.members.some(m => m.new && m.new !== m.old)).length;
+  $('chips').innerHTML = Object.entries(counts||{})
+    .map(([k,v]) => `<span class="chip"><span class="badge b-${k}">${k}</span> × <b>${v}</b></span>`).join('')
+    + `<span class="chip muted">待改名 <b>${pending}</b></span>`;
+  const tb = $('tb');
+  tb.innerHTML = '';
+  GROUPS.forEach((g,i) => {
+    const tr = document.createElement('tr');
+    const dis = g.status !== 'ok';                       // 仅用于状态小字
+    const defaultOn = g.status === 'ok' && !hasTag(g);   // 已标记行默认不勾，但可手动勾
+    const newName = (g.members.find(m=>m.new) || {}).new || '';
+    const extra = g.members.length > 1 ? `<span class="tag">+${g.members.length-1} 个配套文件</span>` : '';
+    const srcTxt = sourceText(g.source);
+    const anOk = anEnabled(g);   // 所有文件（含已识别色彩空间）都可分析
+    // rel 是相对所选目录的子文件夹路径；Windows 下含反斜杠（charCode 92），
+    // 统一成正斜杠并加 .../ 前缀。文件直接在所选目录时仍显示「所选目录」。
+    const dirTxt = g.rel
+      ? escapeHtml('.../' + String(g.rel).split(String.fromCharCode(92)).join('/'))
+      : '<span class="muted">所选目录</span>';
+    tr.innerHTML = `
+      <td class="an-col"><input type="checkbox" class="anChk" data-i="${i}" ${anOk?'':'disabled'}
+           title="勾选后点「分析选中画面」"
+           onclick="anOnCheck(${i}, event)"></td>
+      <td class="ren-col"><input type="checkbox" class="renChk" data-i="${i}" ${defaultOn?'checked':''}></td>
+      <td class="name"><span class="fn" tabindex="0" role="button" title="点击用系统默认程序打开"
+              onclick="openFile(${i})"
+              onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openFile(${i})}">${escapeHtml(g.video)}</span><br>
+          <span class="muted" style="font-size:11px">${dirTxt}</span>
+          ${dis ? `<span class="muted"> · ${statusText(g)}</span>` : ''}</td>
+      <td class="dev" title="${g.device ? '来自文件元数据 ©too' : '元数据未记录设备型号'}">${escapeHtml(g.device || '— 未记录')}</td>
+      <td>${g.raw ? escapeHtml(g.raw) : '<span class="muted">未识别</span>'}<br>
+          <span class="src ${g.source==='none'?'src-unknown':''}">${srcTxt}</span>
+          <div class="anInline" id="anIn${i}"></div></td>
+      <td><select class="codeSel" data-i="${i}" onchange="setCode(${i}, this.value)">
+          ${CODES.map(c=>`<option value="${c.k}" ${c.k===g.code?'selected':''}>${c.k} · ${c.n}</option>`).join('')}
+          </select></td>
+      <td class="newname" id="nn${i}">${escapeHtml(newName) || '—'} ${extra}</td>`;
+    tb.appendChild(tr);
+  });
+  refreshStat();
+  renderAnInline();          // 把已有画面分析结果回填到对应行
+  $('emptyMsg').style.display = GROUPS.length ? 'none' : '';
+  $('stat').textContent = `共 ${GROUPS.length} 个文件，${pending} 个待改名`;
+}
+
+function statusText(g){
+  return {skip_tagged:'已标记，跳过', no_D:'无需标记', unchanged:'无需变更'}[g.status] || '';
+}
+function escapeHtml(s){ const d=document.createElement('div'); d.textContent=s==null?'':s; return d.innerHTML; }
+function sourceText(src){
+  const M = {'moov/meta':'视频内元数据（可靠）','moov/raw':'视频内字符串',
+             'srt':'SRT 字幕 color_md（可靠）','srt/lrf':'LRF 字幕',
+             'none':'未开启字幕，无色彩信息'};
+  if (M[src]) return M[src];
+  return (src && src.endsWith('/lrf')) ? 'LRF 代理元数据' : (src || '—');
+}
+
+// ---------- 手动指定色彩模式（与后端 core.plan_new_stem 完全一致的幂等规则） ----------
+function newStem(stem, code){
+  const m = stem.match(/_D([12UHNMC])?$/i);
+  const suf = {D1:'_D1', D2:'_D2', DH:'_DH', DN:'_DN', DM:'_DM',
+               DC:'_DC', DU:'_DU'}[code] || '_DU';
+  if (m) {
+    if (m[0].toUpperCase() === suf.toUpperCase()) return stem;   // 幂等
+    return stem.slice(0, m.index) + suf;
+  }
+  if (/^DJI_\d{4,6}$/i.test(stem)) return stem + suf;           // O3 / Action 2：追加
+  return null;
+}
+function setCode(i, code){
+  const g = GROUPS[i];
+  g.code = code;
+  g.custom = true;   // 手动指定 / 批量指定 / 按建议应用都算「已自定义」
+  g.members.forEach(m => {
+    const stem = m.old.replace(/\.[^.]+$/, '');
+    const ext = m.old.slice(stem.length);
+    const ns = newStem(stem, code);
+    m.new = ns ? ns + ext : null;
+  });
+  const nn = $('nn' + i);
+  if (nn) {
+    const n = (g.members.find(m=>m.new) || {}).new || '';
+    const extra = g.members.length > 1 ? `<span class="tag">+${g.members.length-1} 个配套文件</span>` : '';
+    nn.innerHTML = (escapeHtml(n) || '—') + ' ' + extra;
+  }
+  refreshStat();
+  updateChips();
+}
+// ---------- 画面分析（按需抽帧；所有文件可勾选；结果回填到对应行内） ----------
+function isUnknown(g){ return g.source === 'none' || g.code === 'DU'; }
+function anEnabled(g){ return !!g; }   // 已知色彩空间也开放分析
+function anBoxes(){ return Array.from(document.querySelectorAll('#tb input.anChk')); }
+
+function anPicked(){
+  return anBoxes()
+    .map((b, idx) => ({b, idx}))
+    .filter(x => x.b.checked && !x.b.disabled && GROUPS[x.idx])
+    .map(x => ({i: x.idx, abs: (GROUPS[x.idx].members[0] || {}).abs}))
+    .filter(x => !!x.abs);
+}
+
+function anRefreshStat(){
+  const el = $('anStat');
+  if (el) {
+    const n = anPicked().length;
+    el.textContent = n ? `已勾选 ${n} 个文件待分析` : '未勾选任何文件';
+  }
+  const usable = anBoxes().filter(b => !b.disabled);
+  const head = $('anAll');
+  if (head) {
+    head.checked = usable.length > 0 && usable.every(b => b.checked);
+    head.indeterminate = !head.checked && usable.some(b => b.checked);
+  }
+  const btn = $('anApplyBtn');
+  if (btn) btn.disabled = !AN_RESULTS.some(r => r && r.suggestCode && !r.error);
+}
+
+function toggleAnalyzeAll(el){
+  anBoxes().forEach(b => { if (!b.disabled) b.checked = el.checked; });
+  AN_LAST = null;
+  anRefreshStat();
+}
+
+function anOnCheck(i, ev){
+  const boxes = anBoxes();
+  const cur = boxes[i];
+  const target = cur ? cur.checked : false;
+  if (ev && ev.shiftKey && AN_LAST !== null && AN_LAST !== i) {
+    const a = Math.min(AN_LAST, i), b = Math.max(AN_LAST, i);
+    for (let k = a; k <= b; k++) {
+      const bx = boxes[k];
+      if (bx && !bx.disabled && anEnabled(GROUPS[k])) bx.checked = target;
+    }
+  }
+  AN_LAST = i;
+  anRefreshStat();
+}
+
+function anSelectAll(){
+  anBoxes().forEach(b => { if (!b.disabled) b.checked = true; });
+  AN_LAST = null;
+  anRefreshStat();
+  log('已全选 ' + anPicked().length + ' 个文件待分析');
+}
+function anSelectUnknown(){
+  anBoxes().forEach((b, idx) => {
+    if (!b.disabled && isUnknown(GROUPS[idx])) b.checked = true;
+  });
+  AN_LAST = null;
+  anRefreshStat();
+  log('已全选未识别文件：' + anPicked().length + ' 个');
+}
+function anSelectPendingUnknown(){
+  // 单次分析上限 100：先清空，再按表格顺序取「未改名且未识别」的前 100 个。
+  const boxes = anBoxes();
+  const candidates = [];
+  boxes.forEach((b, idx) => {
+    b.checked = false;
+    const g = GROUPS[idx];
+    if (!b.disabled && g && !hasTag(g) && isUnknown(g)) candidates.push(idx);
+  });
+  candidates.slice(0, ANALYZE_MAX).forEach(idx => { boxes[idx].checked = true; });
+  AN_LAST = null;
+  anRefreshStat();
+  const picked = anPicked().length;
+  log(candidates.length > ANALYZE_MAX
+    ? `已选中前 ${picked} 个未改名且未识别文件（共 ${candidates.length} 个，超出单次上限 ${ANALYZE_MAX}，剩余请分批分析）`
+    : `已选中 ${picked} 个未改名且未识别文件`);
+}
+function anMarkSelected(){
+  const picks = anPicked();
+  if (!picks.length) return log('请先勾选要标记的分析文件');
+  const sel = $('anMarkCode');
+  if (!sel) return log('标记下拉未初始化');
+  const code = sel.value;
+  let n = 0;
+  picks.forEach(p => {
+    if (!GROUPS[p.i]) return;
+    setCode(p.i, code);                       // 复用手动指定链路，含幂等改名预览
+    const box = document.querySelector(`.codeSel[data-i="${p.i}"]`);
+    if (box) box.value = code;
+    n++;
+  });
+  const stat = $('anMarkStat');
+  if (stat) stat.textContent = `已标记 ${n} 个 · ${code}`;
+  log(`已将 ${n} 个已勾选分析文件标记为 ${code}（仅预览，尚未改名；请核对后点「执行重命名」）`);
+  anRefreshStat();
+}
+function anInvert(){
+  anBoxes().forEach(b => { if (!b.disabled) b.checked = !b.checked; });
+  anRefreshStat();
+  log('已反选，当前勾选 ' + anPicked().length + ' 个');
+}
+function anClear(){
+  anBoxes().forEach(b => { if (!b.disabled) b.checked = false; });
+  AN_LAST = null;
+  anRefreshStat();
+}
+
+async function anRun(){
+  if (AN_BUSY) return;                       // 防重复点击
+  const picks = anPicked();
+  if (!picks.length) return log('请先勾选要分析的文件（可点「选未改名+未识别前100」或「全选未识别」）');
+  AN_BUSY = true;
+  const btn = $('anRunBtn');
+  btn.disabled = true;
+  const hwaccel = !!$('anHw').checked;
+  log(`画面分析：开始处理 ${picks.length} 个文件（${hwaccel ? '硬解优先' : 'CPU 解码'}，按需抽帧）…`);
+  try {
+    const r = await fetch('/api/analyze', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({paths: picks.map(p => p.abs), frames: 2, hwaccel})}).then(r => r.json());
+    if (r.error) { log('分析失败：' + r.error); return; }
+    AN_PICKS = picks;
+    AN_RESULTS = Array.isArray(r.results) ? r.results : [];
+    renderAnInline();
+    const n = AN_RESULTS.filter(x => x && x.suggestCode && !x.error).length;
+    const decoders = [...new Set(AN_RESULTS.map(x => x && x.decoder).filter(Boolean))].join(' / ') || '未解码';
+    log(`分析完成：${AN_RESULTS.length} 个文件，${n} 个有明确建议；解码：${decoders}；结果已显示在对应文件行内，未改动识别码或文件名。`);
+    if (r.skipped && r.skipped.length) log('（后端跳过无效路径 ' + r.skipped.length + ' 个）');
+  } catch (e) {
+    log('分析失败：' + e);
+  } finally {
+    btn.disabled = false;
+    AN_BUSY = false;
+  }
+}
+
+function renderAnInline(){
+  // 结果直接写回对应文件行，不再在下方另开列表
+  const byIndex = {};
+  AN_RESULTS.forEach((r, j) => {
+    const pk = AN_PICKS[j];
+    if (pk && pk.i !== undefined) byIndex[pk.i] = r;
+  });
+  GROUPS.forEach((g, i) => {
+    const el = $('anIn' + i);
+    if (!el) return;
+    const r = byIndex[i];
+    if (!r) { el.innerHTML = ''; return; }
+    if (r.error || r.sat === null || r.sat === undefined) {
+      el.innerHTML = `<span class="anMid">画面分析：${escapeHtml(r.hint || r.error || '抽帧失败')}</span>`;
+      return;
+    }
+    const sug = r.suggestCode
+      ? `<span class="anSug">建议 ${escapeHtml(r.suggestCode)}</span>`
+      : '<span class="anMid">需肉眼确认（中间地带）</span>';
+    el.innerHTML = `画面分析：饱和度 <b>${escapeHtml(String(r.sat))}</b>`
+      + ` · 对比度 <b>${escapeHtml(String(r.contrast))}</b> · ${escapeHtml(r.hint)} · ${sug}`;
+  });
+  anRefreshStat();
+}
+
+function anApply(){
+  const usable = [];
+  AN_RESULTS.forEach((r, j) => {
+    if (!r || !r.suggestCode || r.error) return;
+    const pk = AN_PICKS[j];
+    const g = pk ? GROUPS[pk.i] : null;
+    if (!g || g.status !== 'ok') return;
+    usable.push({pk, g, code: r.suggestCode});
+  });
+  if (!usable.length) { log('没有可应用的明确建议（中间地带需肉眼确认）'); return; }
+  const known = usable.filter(x => !isUnknown(x.g)).length;
+  if (known && !confirm(
+      `其中 ${known} 个文件已有识别结果（可能来自元数据 / SRT）。\n` +
+      '饱和度判据对 D-Cinelike 无效，确认要用画面对比度 / 饱和度的建议覆盖吗？')) return;
+  usable.forEach(x => {
+    setCode(x.pk.i, x.code);                    // 复用现有手动指定链路
+    const sel = document.querySelector(`.codeSel[data-i="${x.pk.i}"]`);
+    if (sel) sel.value = x.code;
+  });
+  log(`已把 ${usable.length} 个文件的「标记为」改为建议代码（仅预览，尚未改名；请核对后点「执行重命名」）`);
+  if (known) log(`（其中 ${known} 个覆盖了已有识别结果）`);
+  anRefreshStat();
+}
+
+function refreshStat(){
+  const items = GROUPS.filter(g => g.status === 'ok');
+  const unknown = items.filter(g => isUnknown(g)).length;
+  // 统计所有行（与可勾选范围一致），不再只看 status==='ok'
+  const pending = GROUPS.filter(g => g.members.some(m => m.new && m.new !== m.old)).length;
+  $('stat').textContent = `共 ${GROUPS.length} 个文件，${pending} 个待改名` +
+    (unknown ? `，${unknown} 个未识别` : '');
+  const abox = $('analyzeBox');
+  if (abox) abox.style.display = GROUPS.length ? '' : 'none';   // 所有文件都可分析，常驻显示
+  anRefreshStat();
+}
+function updateChips(){
+  const c = {};
+  GROUPS.forEach(g => { if (g.status === 'ok') c[g.code] = (c[g.code]||0)+1; });
+  const pending = GROUPS.filter(g => g.members.some(m => m.new && m.new !== m.old)).length;
+  $('chips').innerHTML = Object.entries(c)
+    .map(([k,v]) => `<span class="chip"><span class="badge b-${k}">${k}</span> × <b>${v}</b></span>`).join('')
+    + `<span class="chip muted">待改名 <b>${pending}</b></span>`;
+}
+function toggleAll(el){
+  // renChk 不再有 disabled，表头即可选中所有行
+  document.querySelectorAll('#tb input.renChk').forEach(c => { if(!c.disabled) c.checked = el.checked; });
+}
+
+// ---------- 按范围勾选改名（先清空全部，再按规则逐行设置） ----------
+function renSelect(kind){
+  const rules = {
+    tagged:   g => hasTag(g),                 // 所有已改名
+    untagged: g => !hasTag(g),                // 所有未改名
+    unknown:  g => isUnknown(g),              // 所有未识别
+    custom:   g => g.custom === true,         // 所有已自定义
+  };
+  const labels = {tagged:'所有已改名', untagged:'所有未改名',
+                  unknown:'所有未识别', custom:'所有已自定义'};
+  const pred = rules[kind];
+  let n = 0, total = 0;
+  const boxes = document.querySelectorAll('#tb input.renChk');
+  boxes.forEach(c => {
+    const g = GROUPS[+c.dataset.i];
+    c.checked = !!(pred && g && pred(g));
+    if (c.checked) n++;
+    total++;
+  });
+  const head = $('all');                     // 同步表头全选框状态
+  if (head) {
+    head.checked = total > 0 && n === total;
+    head.indeterminate = n > 0 && n < total;
+  }
+  log(`${labels[kind] || kind}：已选中 ${n} 个文件`);
+}
+
+async function apply(){
+  const items = [];
+  document.querySelectorAll('#tb input.renChk').forEach(c => {
+    if (c.checked && !c.disabled) GROUPS[+c.dataset.i].members.forEach(m => {
+      if (m.new && m.new !== m.old) items.push(m);   // 无变化项不发给后端
+    });
+  });
+  if (!items.length) return log('没有选中任何文件');
+  if (!confirm(`将对 ${items.length} 个文件执行重命名（只改文件名，不改内容）。\n是否继续？`)) return;
+  const r = await fetch('/api/apply', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({items})}).then(r=>r.json());
+  log(`改名完成：成功 ${r.done.length}，失败 ${r.failed.length}`);
+  r.failed.forEach(f => log('  失败：' + f.old + ' → ' + f.err));
+  GROUPS = [];
+  $('tb').innerHTML = ''; $('stat').textContent = '';
+  $('chips').innerHTML = '<span class="chip">如需重扫，请再次点击「扫描」</span>';
+}
+
+async function undo(){
+  const names = [];
+  document.querySelectorAll('#tb input.renChk').forEach(c => {
+    if (!c.checked || c.disabled) return;
+    const g = GROUPS[+c.dataset.i];
+    if (!g) return;
+    g.members.forEach(m => { if (m.old) names.push(m.old); });   // 当前文件名
+  });
+  if (!names.length) return log('请先勾选要撤销重命名的文件');
+  if (!confirm(`将按勾选范围撤销重命名（已勾选 ${names.length} 个文件名）。\n`
+      + '只撤销这些文件在最近一次改名记录中对应的项，是否继续？')) return;
+  const r = await fetch('/api/undo', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({names})}).then(r=>r.json());
+  if (r.error) return log(r.error);
+  log(`按勾选范围撤销完成：成功 ${r.ok.length} 个文件` +
+      (r.failed.length ? `，失败 ${r.failed.length}` : ''));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+# Windows batch launchers must stay CRLF; cmd.exe mis-parses LF-only .bat
+# files (rem lines and goto labels break), causing the window to flash and exit.
+*.bat text eol=crlf

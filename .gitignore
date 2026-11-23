@@ -1,0 +1,21 @@
+# WorkBuddy 应用状态（实时占用目录，git 索引会被锁；项目记忆不进版本库）
+.workbuddy/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+
+# 临时输出
+tmp/
+temp/
+*.tmp
+*.log
