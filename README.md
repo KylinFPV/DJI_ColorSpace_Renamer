@@ -4,6 +4,10 @@
 
 给 DJI 视频文件名末尾加上色彩标记（`_D1` / `_D2` / `_DH` / `_DN` / `_DM` / `_DC` / `_DU`），后期调色时一眼就能看出是哪一种色彩模式。
 
+> **exe 版本更简单**：解压到任意文件夹，双击 exe 打开即用，已内置全部依赖，不用安装任何软件。请不要放在只读位置——`C:\Program Files` 就是只读的。撤销记录 `_history\` 写在 exe 所在目录内，目录需可写，否则撤销会失效。
+>
+> 仍然推荐大家使用 **Python 版本**：可以让你自己的 AI 按需求改源码。代价是要自己安装 Python 3 和 ffmpeg 等依赖。
+
 当前版本 **v3.04.03**　·　永久免费开源　·　GitHub：<https://github.com/KylinFPV/DJI_ColorSpace_Renamer>  
 B站 / 抖音 / 小红书 / YouTube：[KylinFPV](https://space.bilibili.com/36780014)
 
@@ -174,6 +178,10 @@ O3 天空端 / Action 2 的 `DJI_xxxx.MP4` 没有 `_D` 标记时，会**追加**
 **中文版 README 见上方**（Chinese version above ↑）
 
 Add a color tag to the end of DJI video filenames (`_D1` / `_D2` / `_DH` / `_DN` / `_DM` / `_DC` / `_DU`), so you can tell at a glance which color mode was used during post-production color grading.
+
+> **The exe build is simpler**: unzip it into any folder and double-click the exe — all dependencies are bundled, so no software needs to be installed. Do not put it in a read-only location, for example `C:\Program Files` is read-only. The undo history `_history\` is written inside the exe folder; that folder must be writable or undo will fail.
+>
+> The **Python version is still recommended**: it lets your own AI modify the source code to fit your needs. The trade-off is that you install Python 3, Pillow and ffmpeg yourself.
 
 Current version **v3.04.03** · Free and open source forever · GitHub: <https://github.com/KylinFPV/DJI_ColorSpace_Renamer>  
 Bilibili / Douyin / Xiaohongshu / YouTube: [KylinFPV](https://space.bilibili.com/36780014)
