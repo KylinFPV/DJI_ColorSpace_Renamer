@@ -48,6 +48,8 @@ B站 / 抖音 / 小红书 / YouTube：[KylinFPV](https://space.bilibili.com/3678
 
 ## 二、需要什么软件，放在哪里
 
+exe 版本已更新在 Releases 里，方便打开即用。解压到非系统目录即可用。但仍然推荐大家使用 Python 版本，可以按自己需求让 AI 修改和 debug。AI 万岁哈哈。
+
 ### 1. 基本要求
 
 | 用途 | 需要什么 | 是否必须 |
@@ -222,6 +224,8 @@ Please read these four points first; the most important information is here:
 ---
 
 ## 2. What software is needed and where to put it
+
+The exe build is now available in Releases — just unzip it into a non-system folder and open it to use. The Python version is still recommended, though, so your AI can modify and debug it to fit your needs. Long live AI, haha.
 
 ### 1. Basic requirements
 

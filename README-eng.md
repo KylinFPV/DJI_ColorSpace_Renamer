@@ -46,6 +46,8 @@ Please read these four points first; the most important information is here:
 
 ## 2. What software is needed and where to put it
 
+The exe build is now available in Releases — just unzip it into a non-system folder and open it to use. The Python version is still recommended, though, so your AI can modify and debug it to fit your needs. Long live AI, haha.
+
 ### 1. Basic requirements
 
 | Purpose | What's needed | Required? |
