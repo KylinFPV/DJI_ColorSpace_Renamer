@@ -7,6 +7,10 @@ Bilibili / Douyin / Xiaohongshu / YouTube: [KylinFPV](https://space.bilibili.com
 
 Currently supported devices: <span style="color:#0f766e"><b>Osmo Pocket 4P</b></span> (camera body metadata); <span style="color:#1f6feb"><b>Avata 360 / Avata 2 / O4 Air Unit Pro / O3 Air Unit</b></span> (SRT subtitles); <span style="color:#b45309"><b>Osmo Pocket 3 / Action 2 / Osmo Nano / Osmo 360 II</b></span> (no color metadata; requires manual assignment or frame reference).
 
+![Full interface](docs/screenshots/main.png)
+
+*Full interface: footage folder and scan options at the top; the results table below lists device, detection source, tag and renamed filename for each file.*
+
 **Usage order (flowchart):**
 
 ```text
@@ -97,6 +101,10 @@ Recommended order: **Select analysis scope → Analyze → Tag → Select rename
 
 Selecting a directory and scanning: Paste the footage folder into the path box, or click "Browse Folder...". The first time you open it, it will show the root of the drives; afterwards it will automatically remember the last location. Scan options: whether to include companion files with the same name, whether to include subfolders, and whether to skip already-tagged files.
 
+![Rename confirmation dialog, Undo Rename and run log](docs/screenshots/rename-undo.png)
+
+*Clicking "Execute Rename" asks for confirmation first, and only filenames are changed. "Undo Rename" reverts the latest rename within the checked scope; the run log at the bottom records every scan and rename.*
+
 ---
 
 ## 4. Filename tag reference
@@ -115,6 +123,10 @@ When an O3 air unit / Action 2 `DJI_xxxx.MP4` has no `_D` tag, a suffix is **app
 ---
 
 ## 5. Frame saturation / contrast analysis (reference values, extract frames on demand, requires FFmpeg)
+
+![Frame analysis results with saturation / contrast values and suggested tags](docs/screenshots/analysis.png)
+
+*Results are written into the "Detected result / source" column with a suggested tag; nothing is renamed automatically. GPU hardware decoding is used by default.*
 
 - Frames are extracted only when you actively check the "Analyze" column and click "Analyze Selected Frames"; the results are only suggestions and will not rename files automatically.
 - Saturation `<32` is more likely D-Log M; `>48` is more likely standard Rec.709; `32~48` needs visual confirmation.
